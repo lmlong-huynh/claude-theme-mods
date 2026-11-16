@@ -48,3 +48,7 @@ Two things the koi pond does that a new theme can reuse:
 2. Give the scene its own name prefix in `register.tsx` (letters, digits, `_` and `-` only).
 3. Add the theme to `.claude-plugin/marketplace.json`.
 4. Check it with `claude plugin validate themes/<name>`.
+
+## Licence
+
+MIT, see [LICENSE](LICENSE). One file is not mine to license: `hooks/make-colors.js` and its `.d.ts` in each theme are Anthropic's colour maker from the Claude Code mod toolkit, copied in unchanged as that file's own header instructs.

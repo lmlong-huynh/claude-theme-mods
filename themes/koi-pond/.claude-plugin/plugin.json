@@ -2,5 +2,6 @@
   "name": "koi-pond",
   "version": "1.0.0",
   "description": "A painted koi pond behind the chat: pixel koi that surface and ripple the water, lily pads, reeds, drifting petals and fireflies.",
-  "author": { "name": "lmlong-huynh" }
+  "author": { "name": "lmlong-huynh" },
+  "license": "MIT"
 }
