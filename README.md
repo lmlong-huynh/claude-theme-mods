@@ -12,6 +12,12 @@ A painted pond seen from above. Nine koi, each a chain of small cells, swim loop
 
 Works in dark and light mode, and pauses when the system asks for reduced motion.
 
+### koi-dark
+
+![Pixel koi swimming on a plain black background](docs/koi-dark.jpg)
+
+The same koi on plain black: no water, no plants, nothing else. They swim, beat their tails and brighten now and then, and the cells of the grid lift in a grey ripple where one came up. The app's own surfaces go near-black with an orange accent. Made for dark mode only.
+
 ## Install
 
 In a Claude Code session, type:
@@ -19,6 +25,8 @@ In a Claude Code session, type:
 ```
 /plugin install koi-pond --marketplace lmlong-huynh/claude-theme-mods
 ```
+
+Put `koi-dark` in place of `koi-pond` for the dark one. Turn on one theme at a time: each sets the whole look, so the last one loaded wins.
 
 Answer `y` to add the marketplace, pick a scope, then restart the app. The scene shows in the Claude desktop and mobile apps; the terminal and editors draw no themes.
 

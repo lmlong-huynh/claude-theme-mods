@@ -1,11 +1,18 @@
 {
   "name": "claude-theme-mods",
-  "owner": { "name": "lmlong-huynh" },
+  "owner": {
+    "name": "lmlong-huynh"
+  },
   "plugins": [
     {
       "name": "koi-pond",
       "source": "./themes/koi-pond",
       "description": "A painted koi pond behind the chat: pixel koi that surface and ripple the water, lily pads, reeds, drifting petals and fireflies."
+    },
+    {
+      "name": "koi-dark",
+      "source": "./themes/koi-dark",
+      "description": "Pixel koi swimming on plain black behind the chat. No pond, no plants: just the koi and the ripples they make."
     }
   ]
 }
