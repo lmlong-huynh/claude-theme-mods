@@ -10,6 +10,9 @@
 // each dot there slides across the body, further the nearer the tail, a
 // moment after the dot ahead of it.
 //
+// Light plays on them as they go: a pale sheen on each koi's back comes and
+// goes in a wave that runs from head to tail, each koi at its own pace.
+//
 // Now and then a koi brightens as if it came up to a surface, and the cells
 // of the grid lift in a ring that spreads from where its head was.
 //
@@ -33,8 +36,8 @@ const UNIT = 16 / 3
 const GAP = 2
 
 // w white, r red, k ink, x grey, g gold, y pale gold, o orange, e ember,
-// f fin, s shade.
-type Colour = 'w' | 'r' | 'k' | 'x' | 'g' | 'y' | 'o' | 'e' | 'f' | 's'
+// f fin, s shade, l light.
+type Colour = 'w' | 'r' | 'k' | 'x' | 'g' | 'y' | 'o' | 'e' | 'f' | 's' | 'l'
 
 type Cell = [x: number, y: number]
 
@@ -82,6 +85,11 @@ const FRY: Kind = {
   period: 0.7,
   glow: 18,
 }
+
+// The sheen: seconds for one shimmer on the first koi, how much longer each
+// next koi's takes so no two keep time, and how long each dot waits on the
+// dot ahead, which is what makes the light run down the back.
+const SHEEN = { seconds: 2.3, more: 0.27, lag: 0.17 }
 
 // Share of a beat each dot waits on the dot ahead.
 const BEAT_LAG = 1 / 30
@@ -508,6 +516,21 @@ function swimmers(t: number): { routes: string; fish: string; rings: string } {
       }
     }
 
+    // The sheen lies over the markings, a cell towards the light and a little
+    // narrower than the back. Like the markings it keeps to the steady front
+    // half.
+    const shimmer = SHEEN.seconds + i * SHEEN.more
+
+    routes += `.k${i}.hl{animation:${swim},sheen ${shimmer.toFixed(2)}s ease-in-out infinite;animation-delay:var(--d),var(--w)}`
+
+    for (let k = 1; k < steady; k++) {
+      const wide = radii[k]! - 1.5
+
+      if (wide >= 1) {
+        fish += `<use href="#${shape('l', disc(wide, -1, -1))}" class="k${i} hl" style="--d:${delay(k)};--w:${into(-k * SHEEN.lag, shimmer, t)}"/>`
+      }
+    }
+
     const [eyeDot, eyeOut] = koi.kind.eyes
 
     fish += turned(eyeDot, shape('k', pair([[0, eyeOut]])))
@@ -542,10 +565,10 @@ function swimmers(t: number): { routes: string; fish: string; rings: string } {
     }
 
     for (const u of [...moments].sort((a, b) => a - b)) {
-      up += `${share(u - 1.4)}{opacity:.8}${share(u - 0.1)},${share(u + 0.9)}{opacity:1}${share(u + 2.6)}{opacity:.8}`
+      up += `${share(u - 1.4)}{opacity:.92}${share(u - 0.1)},${share(u + 0.9)}{opacity:1}${share(u + 2.6)}{opacity:.92}`
     }
 
-    routes += `@keyframes up${i}{${up}}.s${i}{opacity:.8;animation:up${i} ${seconds}s linear infinite}`
+    routes += `@keyframes up${i}{${up}}.s${i}{opacity:.92;animation:up${i} ${seconds}s linear infinite}`
     fish = `${fish.slice(0, fishFrom)}<g class="s${i}" style="animation-delay:${delay(0)}">${fish.slice(fishFrom)}</g>`
   })
 
@@ -587,7 +610,8 @@ const style = (routes: string): string =>
     `path{fill:none;stroke-width:${CELL}px}`,
     '.grid{stroke:#000;stroke-width:.8}',
     '.cw{stroke:#f3ead8}.cr{stroke:#e2472d}.ck{stroke:#2a2826}.cx{stroke:#9a9690}.cg{stroke:#e8bd45}.cy{stroke:#f7e3a0}.co{stroke:#f27a22}.ce{stroke:#d05f22}',
-    '.cf{stroke:#f3ead8;opacity:.5}.cs{stroke:#000;opacity:.13}',
+    '.cf{stroke:#f3ead8;opacity:.5}.cs{stroke:#000;opacity:.13}.cl{stroke:#fff}',
+    '.hl{opacity:0}@keyframes sheen{0%,100%{opacity:0}35%{opacity:.5}52%{opacity:.14}68%{opacity:.4}}',
     '.glow{fill:url(#warm);opacity:.6}',
     '.bd{stroke-width:2.2px;stroke-dasharray:2.2 .8}',
     `.rp{visibility:hidden}.ql,.qs{opacity:0;animation:${RIPPLE_SECONDS}s ease-in-out infinite;animation-duration:var(--p)}.ql{animation-name:lit}.qs{stroke:#4a4a4a;animation-name:wall}`,
