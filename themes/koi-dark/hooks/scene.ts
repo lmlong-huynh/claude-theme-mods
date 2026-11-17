@@ -20,6 +20,14 @@
 // laid over the top in black, so its lines cut every shape into cells and
 // vanish against the background.
 //
+// The scene is drawn at one size for a window about as wide as it is here,
+// and never scaled up to fill a wider one: it is fitted inside the window,
+// and the black simply goes on past its edges. What changes with the window's
+// shape is where each koi swims. Every koi has a share of the spare room, so
+// on a wide screen they spread out sideways to its edges, on a tall one up
+// and down, and on a narrow one they draw in towards the middle, where the
+// view is also moved closer so the koi do not shrink to specks.
+//
 // The scene is drawn for a moment `t` seconds along: every animation starts
 // as far into its loop as it would be by then. Drawing it again for a later
 // moment therefore carries on where the last drawing was, which lets the
@@ -106,6 +114,9 @@ type Koi = {
   route: Route
   step: number
   phase: number
+  // Its share of the window's spare room, across and down, in eighths: -4 is
+  // all the way to the left or top edge, 4 to the right or bottom.
+  spread: [number, number]
   glow?: boolean
 }
 
@@ -118,6 +129,7 @@ const SHOAL: Koi[] = [
     route: { cx: 50, cy: 31, ax: 40, ay: 22, fx: 1, fy: 2, px: 0, py: 0.6, bx: 5, gx: 3 },
     step: 0.035,
     phase: 0.1,
+    spread: [-2, -1],
   },
   {
     kind: ADULT,
@@ -127,6 +139,7 @@ const SHOAL: Koi[] = [
     route: { cx: 48, cy: 30, ax: 36, ay: 24, fx: 2, fy: 1, px: 1.4, py: 0, by: 4, gy: 3 },
     step: 0.04,
     phase: 0.55,
+    spread: [2, 1],
   },
   {
     kind: ADULT,
@@ -136,6 +149,7 @@ const SHOAL: Koi[] = [
     route: { cx: 52, cy: 32, ax: 44, ay: 20, fx: 3, fy: 2, px: 2.2, py: 0.3 },
     step: 0.037,
     phase: 0.3,
+    spread: [-1, 2],
   },
   {
     kind: ADULT,
@@ -145,6 +159,7 @@ const SHOAL: Koi[] = [
     route: { cx: 30, cy: 26, ax: 22, ay: 18, fx: 1, fy: 1, px: 0, py: 1.57, bx: 6, gx: 2, by: 5, gy: 3 },
     step: 0.042,
     phase: 0.7,
+    spread: [-4, -3],
   },
   {
     kind: ADULT,
@@ -154,6 +169,7 @@ const SHOAL: Koi[] = [
     route: { cx: 70, cy: 30, ax: 24, ay: 22, fx: 1, fy: 1, px: 1.57, py: 0, bx: 5, gx: 3 },
     step: 0.033,
     phase: 0.2,
+    spread: [4, -2],
     glow: true,
   },
   {
@@ -164,6 +180,7 @@ const SHOAL: Koi[] = [
     route: { cx: 50, cy: 34, ax: 42, ay: 18, fx: 1, fy: 3, px: 3.1, py: 1 },
     step: 0.044,
     phase: 0.85,
+    spread: [1, 3],
   },
   {
     kind: FRY,
@@ -173,6 +190,7 @@ const SHOAL: Koi[] = [
     route: { cx: 22, cy: 46, ax: 14, ay: 10, fx: 2, fy: 3, px: 0.5, py: 0 },
     step: 0.033,
     phase: 0.4,
+    spread: [-4, 4],
   },
   {
     kind: FRY,
@@ -181,6 +199,7 @@ const SHOAL: Koi[] = [
     route: { cx: 80, cy: 48, ax: 15, ay: 9, fx: 3, fy: 2, px: 0, py: 0.9 },
     step: 0.03,
     phase: 0.65,
+    spread: [4, 3],
     glow: true,
   },
   {
@@ -190,6 +209,7 @@ const SHOAL: Koi[] = [
     route: { cx: 76, cy: 14, ax: 16, ay: 8, fx: 2, fy: 1, px: 2, py: 0.4 },
     step: 0.035,
     phase: 0.15,
+    spread: [3, -4],
   },
 ]
 
@@ -561,15 +581,16 @@ function swimmers(t: number): { routes: string; fish: string; rings: string } {
 
       moments.push(u)
       routes += `@keyframes ${gate}{${share(u)}{visibility:visible}${share(u + span)}{visibility:hidden}}`
-      rings += `<use href="#rip" x="${x * CELL}" y="${y * CELL}" class="rp" style="animation:${gate} ${seconds}s step-end infinite;animation-delay:${delay(0)};--r:${into(headAt - u, span, t)};--p:${span.toFixed(3)}s"/>`
+      rings += `<use href="#rip" x="${x * CELL}" y="${y * CELL}" class="rp o${i}" style="animation:${gate} ${seconds}s step-end infinite;animation-delay:${delay(0)};--r:${into(headAt - u, span, t)};--p:${span.toFixed(3)}s"/>`
     }
 
     for (const u of [...moments].sort((a, b) => a - b)) {
       up += `${share(u - 1.4)}{opacity:.92}${share(u - 0.1)},${share(u + 0.9)}{opacity:1}${share(u + 2.6)}{opacity:.92}`
     }
 
+    routes += `.o${i}{translate:calc(var(--x) * ${koi.spread[0] / 8}) calc(var(--y) * ${koi.spread[1] / 8})}`
     routes += `@keyframes up${i}{${up}}.s${i}{opacity:.92;animation:up${i} ${seconds}s linear infinite}`
-    fish = `${fish.slice(0, fishFrom)}<g class="s${i}" style="animation-delay:${delay(0)}">${fish.slice(fishFrom)}</g>`
+    fish = `${fish.slice(0, fishFrom)}<g class="s${i} o${i}" style="animation-delay:${delay(0)}">${fish.slice(fishFrom)}</g>`
   })
 
   return { routes, fish, rings }
@@ -605,8 +626,30 @@ const RIPPLE =
   }).join('') +
   '</g>'
 
+// The spare room for each shape of window: how much wider and taller than
+// the scene the view is, in the scene's own units, and how far the view is
+// moved in. Each is worked out for a shape in the middle of its range, and
+// is a multiple of 24 so an eighth of it is a whole cell.
+//   wider than the scene: the view is as tall as the scene and 1011 x shape wide
+//   narrower:             the view is as wide as the scene and 1602 / shape tall
+const ROOM: Array<[query: string, x: number, y: number, zoom: number]> = [
+  ['min-aspect-ratio:17/10', 192, 0, 1],
+  ['min-aspect-ratio:19/10', 432, 0, 1],
+  ['min-aspect-ratio:215/100', 624, 0, 1],
+  ['min-aspect-ratio:235/100', 816, 0, 1],
+  ['min-aspect-ratio:28/10', 1440, 0, 1],
+  ['min-aspect-ratio:34/10', 1992, 0, 1],
+  ['max-aspect-ratio:15/10', 0, 120, 1],
+  ['max-aspect-ratio:13/10', 0, 312, 1],
+  ['max-aspect-ratio:105/100', -456, 264, 1.4],
+  ['max-aspect-ratio:8/10', -720, 264, 1.8],
+  ['max-aspect-ratio:6/10', -984, 336, 2.6],
+]
+
 const style = (routes: string): string =>
   [
+    `svg{--x:0px;--y:0px;--z:1}.world{scale:var(--z);transform-origin:${Math.round(COLS / 2) * CELL}px ${Math.round(ROWS / 2) * CELL}px}`,
+    ROOM.map(([query, x, y, zoom]) => `@media (${query}){svg{--x:${x}px;--y:${y}px;--z:${zoom}}}`).join(''),
     `path{fill:none;stroke-width:${CELL}px}`,
     '.grid{stroke:#000;stroke-width:.8}',
     '.cw{stroke:#f3ead8}.cr{stroke:#e2472d}.ck{stroke:#2a2826}.cx{stroke:#9a9690}.cg{stroke:#e8bd45}.cy{stroke:#f7e3a0}.co{stroke:#f27a22}.ce{stroke:#d05f22}',
@@ -627,10 +670,11 @@ const style = (routes: string): string =>
 
 export function koi(t = 0): string {
   const { routes, fish, rings } = swimmers(t)
-  const whole = `width="${COLS * CELL}" height="${ROWS * CELL}"`
+  // Far past the scene on every side, on whole cells so the grid stays in step.
+  const beyond = `x="${-1000 * CELL}" y="${-1000 * CELL}" width="${(COLS + 2000) * CELL}" height="${(ROWS + 2000) * CELL}"`
 
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${COLS * CELL} ${ROWS * CELL}" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${COLS * CELL} ${ROWS * CELL}" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges">`,
     `<style>${style(routes)}</style>`,
     '<defs>',
     `<pattern id="grid" width="${CELL}" height="${CELL}" patternUnits="userSpaceOnUse"><path class="grid" d="M${CELL - 0.5} 0V${CELL - 0.5}H0" fill="none"/></pattern>`,
@@ -638,10 +682,12 @@ export function koi(t = 0): string {
     RIPPLE,
     [...defs.values()].map(d => d.markup).join(''),
     '</defs>',
-    `<rect ${whole} fill="#000"/>`,
+    `<rect ${beyond} fill="#000"/>`,
+    '<g class="world">',
     fish,
-    `<rect ${whole} fill="url(#grid)"/>`,
+    `<rect ${beyond} fill="url(#grid)"/>`,
     rings,
+    '</g>',
     '</svg>',
   ].join('')
 }
